@@ -43,11 +43,11 @@ ruleset trip_store {
 			timestamp = event:attr("timestamp").klog("timestamp passed in: ")
 		}
 		always{
-      		ent:trips := ent:trips.defaultsTo(empty_trip, "Trips initialized");
-      		ent:trip_id := ent:trip_id.defaultsTo(empty_id, "trip_ids initialized");
-      		ent:trips{[ent:trip_id{["_0", "trip_id"]}, "mileage"]} := mileage;
-      		ent:trips{[ent:trip_id{["_0", "trip_id"]}, "timestamp"]} := timestamp;
-      		ent:trip_id{["_0", "trip_id"]} := ent:trip_id{["_0", "trip_id"]} + 1
+			ent:trips := ent:trips.defaultsTo(empty_trip, "Trips initialized");
+			ent:trip_id := ent:trip_id.defaultsTo(empty_id, "trip_ids initialized");
+			ent:trips{[ent:trip_id{["_0", "trip_id"]}, "mileage"]} := mileage;
+			ent:trips{[ent:trip_id{["_0", "trip_id"]}, "timestamp"]} := timestamp;
+			ent:trip_id{["_0", "trip_id"]} := ent:trip_id{["_0", "trip_id"]} + 1
 		}
 	}
 
