@@ -1,4 +1,4 @@
-rule manage_fleet {
+ruleset manage_fleet {
   meta {
     name "manage_fleet"
     description <<
@@ -37,7 +37,6 @@ rule manage_fleet {
 			.filter(function(v){
 				v{"attributes"}{"subscriber_role"} == "vehicle"
 			})
-			vehicle_subscriptions
 		}
 
 		last_5_reports = function(){
@@ -47,7 +46,6 @@ rule manage_fleet {
 													.put(ent:reports.keys()[len-3], ent:reports{ent:reports.keys()[len-3]})
 													.put(ent:reports.keys()[len-2], ent:reports{ent:reports.keys()[len-2]})
 													.put(ent:reports.keys()[len-1], ent:reports{ent:reports.keys()[len-1]})
-			reports
 		}
 
 		highest_report = function(){
@@ -80,7 +78,6 @@ rule manage_fleet {
 			with vehicle_name = vehicle_name
 		fired {
 		} else {
-			vehicle_name.klog("Cars name is: ")
 			raise pico event "new_child_request"
 				attributes {
 					"dname": vehicle_name,
@@ -109,13 +106,13 @@ rule manage_fleet {
 				}
 			})
 		fired {
-				ent:vehicles := ent:vehicles.defaultsTo({});
-				ent:vehicles{[vehicle_name]} := new_vehicle
+			ent:vehicles := ent:vehicles.defaultsTo({});
+			ent:vehicles{[vehicle_name]} := new_vehicle
 		}
 	}
 
 	rule create_subscription_module {
-		select when subscription_module_needed
+		select when child subscription_module_needed
 		pre {
 			child_eci = event:attr("child_eci")
 			vehicle_name = event:attr("vehicle_name")
@@ -179,7 +176,7 @@ rule manage_fleet {
 				raise pico event "delete_child_request"
 					attributes child_to_delete;
 					raise wrangler event "subscription_cancellation"
-						with subscription_name = subscription_name
+						with subscription_name = subscription_name;
 				ent:vehicles{[vehicle_name]} := null
 			}
 	}
@@ -192,7 +189,7 @@ rule manage_fleet {
 			report_num = highest_report().as("Number") + 1
 		}
 		if child_eci then
-			event.send({
+			event:send({
 				"eci": child_eci,
 				"eid": "fleet request",
 				"report": "request",
@@ -210,15 +207,15 @@ rule manage_fleet {
 			trips = event:attrs("trips")
 			report_from_child = {
 				"vehicles": vehicles().keys().length(),
+				"responding": 0,
 				"trips": trips
 			}
 			report_num = "report_" + id.split("re#_#")[1]
-			report = {}
-			report.put(id, report_from_child)
+			report = {}.put(id, report_from_child)
 		}
 		always {
-			ent:reports := ent:reports.defaultsTo(empty_reports, "Default to emptyness of reports...")
-			ent:reports := ent:reports.put([report_num], report)
+			ent:reports := ent:reports.defaultsTo(empty_reports, "Default to emptyness of reports...");
+			ent:reports := ent:reports.put([report_num], report);
 			raise increment event "report"
 				attributes{ "report_num": report_num }
 		}
