@@ -25,19 +25,19 @@ ruleset trip_store {
 
 	    trips = function() {
       		ent:trips.defaultsTo({}, "Defaulting trips...")
-		}
+	    }
 
-		long_trips = function() {
+	    long_trips = function() {
     		ent:long_trips
-		}
+	    }
 
-		short_trips = function() {
-			trips = ent:trips.defaultsTo(empty_trip, "trips are cleared");
-			short_trips = trips.difference(ent:long_trips.defaultsTo(empty_long_trip, "long_trips cleared"));
-			short_trips
-		}
+	    short_trips = function() {
+		trips = ent:trips.defaultsTo(empty_trip, "trips are cleared");
+		short_trips = trips.difference(ent:long_trips.defaultsTo(empty_long_trip, "long_trips cleared"));
+		short_trips
+	    }
 	}
-	rule collect_trips{
+	rule collect_trips {
 		select when explicit trip_processed
 		pre{
 			mileage = event:attr("mileage").klog("mileages passed in: ")
@@ -53,7 +53,7 @@ ruleset trip_store {
 		}
 	}
 
-	rule collect_long_trips{
+	rule collect_long_trips {
 		select when explicit found_long_trip
 		pre{
 			mileage = event:attr("mileage").klog("long mileage passed in: ")
@@ -79,11 +79,11 @@ ruleset trip_store {
 	rule generate_report {
 		select when report generate
 		pre {
-			ceci = wrangler:myself().eci
-			peci = wrangler:parent().eci
-			cur_trips = trips()
-			report_num = ent:report_num
-			report_num.defaultsTo(empty_report, "Defaulting to 0...")
+		    ceci = wrangler:myself().eci
+		    peci = wrangler:parent().eci
+    		    cur_trips = trips()
+		    report_num = ent:report_num
+		    crid = ceci + report_num.defaultsTo("0".as("Number"), "Defaults to 0...")
 		}
 		if ceci then
 			event:send({
@@ -92,16 +92,11 @@ ruleset trip_store {
 				"domain": "child",
 				"type": "reporting",
 				"attrs": {
-					"child_report_id": ceci + report_num,
+					"child_report_id": crid,
 					"trips": cur_trips
 				}
 			})
-		
-		always {
-			ent:report_num := ent:report_num.defaultsTo(empty_report, "Defaulting to 0...")
-			ent:report_num{["_0", "report_num"]} := ent:report_num{["_0", "report_num"]} + 1
-		}
-	}
+        }
 
 	rule reset_report_num {
 		select when reset report_num
