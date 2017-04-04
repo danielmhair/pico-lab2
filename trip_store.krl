@@ -19,10 +19,12 @@ ruleset trip_store {
 
 	    empty_id = { "_0": { "trip_id": "0".as("Number"), "long_trip_id" : "0".as("Number") } }
 
+		empty_report = {"_0": { "report_num": "0".as("Number") } }
+
 	    long_trip = "200".as("Number")
 
 	    trips = function() {
-      		ent:trips
+      		ent:trips.defaultsTo({}, "Defaulting trips...")
 		}
 
 		long_trips = function() {
@@ -65,12 +67,46 @@ ruleset trip_store {
 			ent:trip_id{["_0", "long_trip_id"]} := ent:trip_id{["_0", "long_trip_id"]} + 1
 		}
 	}
-	rule clear_trips{
+	rule clear_trips {
 		select when car trip_reset
 		always {
 			ent:trips := empty_trip;
 			ent:long_trips := empty_long_trips;
 			ent:trip_id := empty_id
+		}
+	}
+
+	rule generate_report {
+		select when report generate
+		pre {
+			ceci = wrangler:myself().eci
+			peci = wrangler:parent().eci
+			cur_trips = trips()
+			report_num = ent:report_num
+			report_num.defaultsTo(empty_report, "Defaulting to 0...")
+		}
+		if ceci then
+			event:send({
+				"eci": peci,
+				"eid": "report generated",
+				"domain": "child",
+				"type": "reporting",
+				"attrs": {
+					"child_report_id": ceci + report_num,
+					"trips": cur_trips
+				}
+			})
+		
+		always {
+			ent:report_num := ent:report_num.defaultsTo(empty_report, "Defaulting to 0...")
+			ent:report_num{["_0", "report_num"]} := ent:report_num{["_0", "report_num"]} + 1
+		}
+	}
+
+	rule reset_report_num {
+		select when reset report_num
+		always {
+			ent:report_num := empty_report
 		}
 	}
  }
